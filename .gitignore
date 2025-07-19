@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+.venv/
+venv/
+env/
+.env
+
+# Byte-compiled / logs
+*.log
+
+# Docker / compose artifacts (not images themselves)
+*.pid
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Python packaging
+build/
+dist/
+*.egg-info/
+
+# Misc
+.pytest_cache/
