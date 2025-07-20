@@ -1,0 +1,15 @@
+# Scalable Like System (Demo)
+
+Components:
+- **web_app**: Flask endpoint `/like` enqueues likes into Redis.
+- **processor**: Consumes queue, upserts counts into Postgres.
+- **reader_app**: Exposes `/likes/<id>` to read counts.
+- **load_tester**: Generates concurrent POST load.
+- **Redis**: Simple queue (list with LPUSH/BRPOP).
+- **Postgres**: Persistent storage for like counts.
+
+## Quick Start
+```bash
+docker compose up -d
+curl -X POST http://localhost:5000/like
+curl http://localhost:5001/likes/1
