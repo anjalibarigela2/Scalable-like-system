@@ -1,6 +1,10 @@
-# Scalable Like System (Demo)
+# Scalable Like System with Flask, Redis, and PostgreSQL
 
-Components:
+This project demonstrates a **scalable "like" system backend** architecture using **Flask**, **Redis**, **PostgreSQL**, and **Docker Compose**. It's designed for high-throughput environments like social media platforms, where users frequently like posts — and the system must process those likes quickly, reliably, and asynchronously.
+
+---
+
+# Components:
 - **web_app**: Flask endpoint `/like` enqueues likes into Redis.
 - **processor**: Consumes queue, upserts counts into Postgres.
 - **reader_app**: Exposes `/likes/<id>` to read counts.
@@ -8,8 +12,113 @@ Components:
 - **Redis**: Simple queue (list with LPUSH/BRPOP).
 - **Postgres**: Persistent storage for like counts.
 
+---
+
+## Tech Stack
+
+| Component     | Role                                                                 |
+|---------------|----------------------------------------------------------------------|
+| **Flask**     | REST API framework used in `web`, `reader`, and `processor` services |
+| **Redis**     | Fast in-memory queue to buffer incoming likes                        |
+| **PostgreSQL**| Durable storage for like counts per post                             |
+| **Docker Compose** | Orchestration of all services in isolated containers            |
+| **Python**    | Core language across all services                                    |
+
+---
+
+## 📦 Project Structure
+
+like_sys/
+│
+├── web_app/         # Flask service that receives likes via POST /like
+│   └── app.py
+│
+├── processor/       # Background worker that consumes likes from Redis and updates DB
+│   └── processor.py
+│
+├── reader_app/      # Flask service that exposes like counts (GET /likes/<post_id>)
+│   └── reader.py
+│
+├── load_tester/     # Sends thousands of like requests to test scalability
+│   └── load_tester.py
+│
+├── db/              # PostgreSQL init script
+│   └── init.sql
+│
+├── run.sh           # Handy script to run/test/monitor the system
+├── docker-compose.yml
+└── README.md
+
+---
+
+## How It Works (Flow)
+
+1. **User hits `/like` (POST)** → `web_app` picks a random post ID and enqueues it into Redis (`like_queue`).
+2. **Redis stores the like** temporarily in memory.
+3. **`processor`** service (multiple instances) continuously listens on the queue and updates like counts in **PostgreSQL**.
+4. **`reader_app`** allows querying the current like count via `/likes/<post_id>` endpoint.
+5. **`load_tester`** simulates load to test system performance (e.g., 1000 requests in 4 seconds).
+
+---
+
+## How to Run the Project
+
+> Make sure Docker Desktop is installed and running.
+
 ## Quick Start
+
 ```bash
 docker compose up -d
 curl -X POST http://localhost:5000/like
 curl http://localhost:5001/likes/1
+```
+
+
+### 1. Start the System
+
+./run.sh start
+
+
+### 2. Run a Load Test
+
+./run.sh test 1000
+
+
+### 3. Check Like Counts
+
+./run.sh check
+
+
+### 4. Send a Single Like
+
+./run.sh like
+
+
+### 5. Reset the Database (clear likes)
+# Optional: Only if you manually add db reset support
+
+./run.sh reset
+
+
+### 6. View Processor Logs
+
+./run.sh logs
+
+
+## Health Endpoints
+
+| Service      | Endpoint             | Description             |
+|--------------|----------------------|-------------------------|
+| web_app      | `GET /health`        | Health check            |
+| reader_app   | `GET /likes/<id>`    | Get like count for post |
+
+
+## Why Redis?
+
+Redis handles the write burst from users (enqueues likes) so that the database isn’t overwhelmed. Processors can consume the queue at their own pace.
+
+
+## Cleanup
+
+./run.sh down        
+./run.sh destroy    
